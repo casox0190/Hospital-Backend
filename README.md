@@ -9,4 +9,5 @@ npm i dotenv
 npm i express-validator
 npm i bcryptjs
 npm i jsonwebtoken
+npm install google-auth-library --save
 ```
