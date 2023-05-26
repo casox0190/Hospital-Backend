@@ -1,63 +1,48 @@
-const Usuario=require('../models/usuario');
+const Medico=require('../models/medico');
 const {response}=require('express');
-const bcrypt=require('bcryptjs');
-const {generarJWT}=require('../helpers/jwt')
 
-const getUsuarios=async(req,res=response)=>{
+
+const getMedicos=async(req,res)=>{
     
-const desde= Number(req.query.desde) || 0;
+    const medicos=await Medico.find()
+                    .populate('usuario','nombre img')
+                    .populate('hospital','nombre');
 
-const [usuarios,total]=await Promise.all([
-
-	Usuario
-		.find({}, 'nombre email role goole')
-		.skip(desde)
-		.limit(5),
-
-	Usuario.count()
-
-]);
-
-res.json({
-	ok:true,
-	usuarios,
-	total
-});
-
+    res.json({
+        ok:true,
+        medicos  
+    });
 }
 
-const crearUsuario=async(req,res=response)=>{
+const crearMedico=async(req,res=response)=>{
 
-    const{email,nombre,password}=req.body;
+    const uid=req.uid;
+    const hospitalDB=req.body.hospital;
+
+    const medico=await new Medico({
+        usuario:uid,
+        ...req.body
+    });
     
+     try {
+        const {nombre}=req.body;
+        const existeMedico=await Medico.findOne({nombre});
 
+        if(existeMedico){
+            return res.status(400).json({
+                ok:false,
+                msg:'Ya existe un medico con ese nombre'
+            });
+        }
 
-        try {
-
-            const existeEmail=await Usuario.findOne({email});
-
-            if(existeEmail){
-                return res.status(400).json({
-                    ok:false,
-                    msg:'El correo ya está registrado'
-                });
-            }
-            
-            const usuario=new Usuario(req.body);
-            //Encriptar contraseña
-            const salt=bcrypt.genSaltSync();
-            usuario.password=bcrypt.hashSync(password,salt);
-
-            //Guardar usuario
-            await usuario.save();
-
-            //Generar token
-            const token=await generarJWT(usuario.id);
+        //Guardar medico
+        const medicoDB=await medico.save();
+         
+         
             
         res.json({
              ok:true,
-             usuario,
-             token,
+             medico:medicoDB
 
             });
 
@@ -66,26 +51,22 @@ const crearUsuario=async(req,res=response)=>{
             res.status(500).json({
                 ok:false,
                 msg:'Error inesperado... revisar logs'
-            })
+            });
         }
 
 }
 
-const actualizarUsuario=async(req,res=response)=>{
+const actualizarMedico=async(req,res=response)=>{
 
-    //TODO:Validar token y comprobar si es el usuario correcto
-
-    const uid=req.params.id;
-    
-    
+        
     try {
 
-    const usuarioDB=await Usuario.findById(uid);
+    const medicoDB=await Medico.findById(id);
 
-    if(!usuarioDB){
+    if(!medicoDB){
         return res.status(404).json({
             ok:false,
-            msg:'No existe un usuario con ese id'
+            msg:'No existe un medico con ese id'
         });
     }
 
@@ -107,7 +88,7 @@ const actualizarUsuario=async(req,res=response)=>{
     campos.email=email;
    
    
-    const usuarioActualizado=await Usuario.findByIdAndUpdate(uid,campos,{new:true});
+    const medicoActualizado=await Usuario.findByIdAndUpdate(uid,campos,{new:true});
 
         res.json({
             ok:true,
@@ -125,7 +106,7 @@ const actualizarUsuario=async(req,res=response)=>{
 
 }
 
-const eliminarUsuario=async(req,res=response)=>{
+const eliminarMedico=async(req,res=response)=>{
 
     const uid=req.params.id;
     
@@ -160,8 +141,8 @@ const eliminarUsuario=async(req,res=response)=>{
 
 
 module.exports={
-    getUsuarios,
-    crearUsuario,
-    actualizarUsuario,
-    eliminarUsuario
+    getMedicos,
+    crearMedico,
+    actualizarMedico,
+    eliminarMedico
 }
