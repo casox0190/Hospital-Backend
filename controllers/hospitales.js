@@ -56,6 +56,7 @@ const crearHospital=async(req,res=response)=>{
 }
 
 const actualizarHospital=async(req,res=response)=>{
+    const id=req.params.id;
 
         
     try {
@@ -70,30 +71,18 @@ const actualizarHospital=async(req,res=response)=>{
         });
     }
 
-     //Actualizaciones
-    const {nombre, ...campos}=req.body;
+   const cambiosHospital={
+    ...req.body,
+    usuario:uid
+   }
 
-    //Comprobar si el email introducido en el 'req.body' es diferente del que ya existe para el usuario con ese id
-    if(hospitalDB.nombre!==nombre){
-
-        //Comprobar si el nombre de ese hospital no existe para otro
-        const checkHospitalDuplicate=Hospital.findOne({nombre});
-        if(checkHospitalDuplicate){
-            return res.status(400).json({
-                ok:false,
-                msg:'Ya existe un hospital con ese nombre'
-            });
-        }
-    }
-    campos.nombre=nombre;
-   
-   
-    const hospitalActualizado=await Hospital.findByIdAndUpdate(id,campos,{new:true});
+       
+    const hospitalActualizado=await Hospital.findByIdAndUpdate(id,cambiosHospital,{new:true});
 
         res.json({
             ok:true,
             hospital:hospitalActualizado,
-            id:req.id
+           
         });
         
     } catch (error) {
@@ -108,25 +97,25 @@ const actualizarHospital=async(req,res=response)=>{
 
 const eliminarHospital=async(req,res=response)=>{
 
-    const uid=req.params.id;
+    const id=req.params.id;
     
     try {
 
-    const usuarioDB=await Usuario.findById(uid);
+    const hospitalDB=await Hospital.findById(id);
 
-    if(!usuarioDB){
+    if(!hospitalDB){
         return res.status(404).json({
             ok:false,
-            msg:'No existe un usuario con ese id'
+            msg:'No existe un hospital con ese id'
         });
     }
        
-    await Usuario.findByIdAndDelete(uid);
+    await Hospital.findByIdAndDelete(id);
 
         res.json({
             ok:true,
             msg:'Usuario eliminado',
-            uid:req.uid
+            
         });
         
     } catch (error) {

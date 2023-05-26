@@ -1,3 +1,4 @@
+const medico = require('../models/medico');
 const Medico=require('../models/medico');
 const {response}=require('express');
 
@@ -58,12 +59,13 @@ const crearMedico=async(req,res=response)=>{
 
 const actualizarMedico=async(req,res=response)=>{
 
-        
+const id=req.params.id;
+const uid=req.uid;
+       
     try {
+    const medico=await Medico.findById(id);
 
-    const medicoDB=await Medico.findById(id);
-
-    if(!medicoDB){
+    if(!medico){
         return res.status(404).json({
             ok:false,
             msg:'No existe un medico con ese id'
@@ -71,29 +73,18 @@ const actualizarMedico=async(req,res=response)=>{
     }
 
      //Actualizaciones
-    const {password, google, email, ...campos}=req.body;
-
-    //Comprobar si el email introducido en el 'req.body' es diferente del que ya existe para el usuario con ese id
-    if(usuarioDB.email!==email){
-
-        //Comprobar si el email introducido en el 'req.body'  ya existe para otro usuario
-        const checkEmailDuplicate=Usuario.findOne({email});
-        if(checkEmailDuplicate){
-            return res.status(400).json({
-                ok:false,
-                msg:'Ya existe un usuario con ese email'
-            });
-        }
+    const cambiosMedico={
+        usuario:uid, 
+        ...req.body
     }
-    campos.email=email;
+
+     
    
-   
-    const medicoActualizado=await Usuario.findByIdAndUpdate(uid,campos,{new:true});
+    const medicoActualizado=await Usuario.findByIdAndUpdate(uid,cambiosMedico,{new:true});
 
         res.json({
             ok:true,
-            usuario:usuarioActualizado,
-            uid:req.uid
+            medico:medicoActualizado
         });
         
     } catch (error) {
@@ -108,25 +99,25 @@ const actualizarMedico=async(req,res=response)=>{
 
 const eliminarMedico=async(req,res=response)=>{
 
-    const uid=req.params.id;
-    
+const id=req.params.id;
+const uid=req.uid;
+       
     try {
+    const medico=await Medico.findById(id);
 
-    const usuarioDB=await Usuario.findById(uid);
-
-    if(!usuarioDB){
+    if(!medico){
         return res.status(404).json({
             ok:false,
-            msg:'No existe un usuario con ese id'
+            msg:'No existe un medico con ese id'
         });
     }
-       
-    await Usuario.findByIdAndDelete(uid);
+        
+   
+   await Medico.findByIdDelete(id);
 
         res.json({
             ok:true,
-            msg:'Usuario eliminado',
-            uid:req.uid
+            msg:'Medico borrado'
         });
         
     } catch (error) {
